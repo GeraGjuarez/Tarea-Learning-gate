@@ -150,8 +150,7 @@ else:
         x='performance_score', 
         y='average_work_hours',
         color='performance_score',
-        points="all", 
-        color_discrete_sequence=px.colors.qualitative.Safe,
+                color_discrete_sequence=px.colors.qualitative.Safe,
         labels={
             'performance_score': 'Puntaje de Desempeño', 
             'average_work_hours': 'Horas Mensuales Trabajadas'
