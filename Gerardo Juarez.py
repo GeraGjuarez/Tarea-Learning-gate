@@ -27,5 +27,3 @@ def load_data():
 
 # Cargar base de datos
 df_raw = load_data()
-
-)
