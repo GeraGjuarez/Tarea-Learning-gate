@@ -82,7 +82,7 @@ if selected_marital != "Todos":
 # 4. TÍTULO, DESCRIPCIÓN Y LOGOTIPO
 # =============================================================================
 st.title("📊 Dashboard de Análisis de Desempeño")
-st.subheader(f"Análisis del Personal — Área: {selected_dept}")
+st.subheader(f"Análisis del Personal — {selected_dept}")
 
 if os.path.exists('logo.png'):
     st.image('logo.png', width=180)
