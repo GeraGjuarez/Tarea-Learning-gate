@@ -105,24 +105,7 @@ else:
     # =============================================================================
     st.markdown("## 📈 Análisis Visual")
     
-    # -------------------------------------------------------------------------
-    # FILA 1: Gráfica Circular de Distribución de Género (Standalone)
-    # -------------------------------------------------------------------------
-    st.markdown("### 🍩 Distribución de Colaboradores por Género")
-    fig_pie = px.pie(
-        df_filtered, 
-        names='gender', 
-        hole=0.4,
-        color_discrete_sequence=px.colors.qualitative.Pastel,
-        labels={'gender': 'Género'}
-    )
-    fig_pie.update_traces(textinfo='percent+label', textposition='outside')
-    fig_pie.update_layout(showlegend=True, height=450)
-    st.plotly_chart(fig_pie, use_container_width=True)
-    
-    st.markdown("---")
-
-    # -------------------------------------------------------------------------
+       # -------------------------------------------------------------------------
     # FILA 2: Distribución de Desempeño y Horas por Género (En paralelo)
     # -------------------------------------------------------------------------
     col1, col2 = st.columns(2)
