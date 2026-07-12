@@ -13,12 +13,12 @@ st.set_page_config(
 # 2. CARGA Y FILTRADO DE LA BASE DE DATOS
 @st.cache_data
 def load_data():
-    path = 'employee_data.csv'
+    path = 'Employee_data.csv'
     if os.path.exists(path):
         return pd.read_csv(path)
     else:
         # Si el archivo obligatorio no está, la app se detiene limpiamente explicando el motivo
-        st.error("❌ Error crítico: No se encontró el archivo 'employee_data.csv' en el repositorio.")
+        st.error("❌ Error crítico: No se encontró el archivo 'Employee_data.csv' en el repositorio.")
         st.info("Por favor, asegúrate de subir el archivo CSV a la misma carpeta de tu repositorio en GitHub.")
         st.stop()
 
