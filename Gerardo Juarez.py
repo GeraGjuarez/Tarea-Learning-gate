@@ -81,4 +81,129 @@ if selected_marital != "Todos":
 # =============================================================================
 # 4. TÍTULO, DESCRIPCIÓN Y LOGOTIPO
 # =============================================================================
-st.title("📊 Dashboard de Análisis de Desempeño
+st.title("📊 Dashboard de Análisis de Desempeño")
+st.subheader(f"Análisis del Personal — Área: {selected_dept}")
+
+if os.path.exists('logo.png'):
+    st.image('logo.png', width=180)
+else:
+    st.markdown("🌐 **[LOGOTIPO: Socialize your knowledge]**")
+
+st.markdown("Esta aplicación web interactiva muestra el análisis de desempeño de los colaboradores de la organización.")
+st.markdown("---")
+
+# Validación de registros resultantes
+if df_filtered.empty:
+    st.error("⚠️ No se encontraron colaboradores con la combinación de filtros seleccionada.")
+else:
+    # Vista previa de la matriz de datos actual
+    with st.expander("👀 Ver matriz de registros filtrados"):
+        st.dataframe(df_filtered)
+
+    # =============================================================================
+    # 5. VISUALIZACIÓN DE GRÁFICOS (Paso 2 y 3 del reto)
+    # =============================================================================
+    st.markdown("## 📈 Análisis Visual")
+    
+    # -------------------------------------------------------------------------
+    # NUEVA FILA: Gráfica Circular de Distribución de Género (Standalone)
+    # -------------------------------------------------------------------------
+    st.markdown("### 🍩 Distribución de Colaboradores por Género")
+    fig_pie = px.pie(
+        df_filtered, 
+        names='gender', 
+        hole=0.4,
+        color_discrete_sequence=px.colors.qualitative.Pastel,
+        labels={'gender': 'Género'}
+    )
+    # Forzar el despliegue de etiquetas con porcentaje y nombre directamente en la gráfica
+    fig_pie.update_traces(textinfo='percent+label', textposition='outside')
+    fig_pie.update_layout(showlegend=True, height=450)
+    st.plotly_chart(fig_pie, use_container_width=True)
+    
+    st.markdown("---") # Separador visual
+
+    # -------------------------------------------------------------------------
+    # FILA 2: Distribución de Desempeño y Horas por Género (En paralelo)
+    # -------------------------------------------------------------------------
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### 🎯 Distribución de los Puntajes de Desempeño")
+        fig1 = px.histogram(
+            df_filtered, 
+            x='performance_score', 
+            nbins=5, 
+            labels={'performance_score': 'Puntaje de Desempeño', 'count': 'Frecuencia'}, 
+            color_discrete_sequence=['#4A90E2']
+        )
+        fig1.update_layout(bargap=0.15)
+        st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        st.markdown("### ⏱️ Promedio de Horas Trabajadas por Género")
+        df_hours_gender = df_filtered.groupby('gender', as_index=False)['average_work_hours'].mean()
+        fig2 = px.bar(
+            df_hours_gender, 
+            x='gender', 
+            y='average_work_hours', 
+            labels={'gender': 'Género', 'average_work_hours': 'Horas Promedio'}, 
+            color='gender', 
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # FILA 3: Edad vs Salario y Relación Horas vs Desempeño Boxplot (En paralelo)
+    # -------------------------------------------------------------------------
+    col3, col4 = st.columns(2)
+
+    with col3:
+        st.markdown("### 💰 Edad vs. Salario de los Empleados")
+        fig3 = px.scatter(
+            df_filtered, 
+            x='age', 
+            y='salary', 
+            hover_name='name_employee', 
+            color='position', 
+            size='satisfaction_level', 
+            labels={'age': 'Edad', 'salary': 'Salario ($)', 'position': 'Puesto'}
+        )
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with col4:
+        # CAMBIO SOLICITADO: Gráfica en formato Boxplot para Horas vs Desempeño
+        st.markdown("### 📊 Distribución de Horas Trabajadas por Puntaje de Desempeño (Boxplot)")
+        
+        # Convertimos temporalmente a string para que actúe como categorías discretas en el eje X
+        df_boxplot = df_filtered.copy()
+        df_boxplot['performance_score'] = df_boxplot['performance_score'].astype(str)
+        
+        fig4 = px.box(
+            df_boxplot, 
+            x='performance_score', 
+            y='average_work_hours',
+            color='performance_score',
+            points="all", # Muestra los puntos individuales al lado de la caja para enriquecer el análisis
+            color_discrete_sequence=px.colors.qualitative.Safe,
+            labels={
+                'performance_score': 'Puntaje de Desempeño', 
+                'average_work_hours': 'Horas Mensuales Trabajadas'
+            }
+        )
+        st.plotly_chart(fig4, use_container_width=True)
+
+# =============================================================================
+# 6. SECCIÓN: CONCLUSIÓN DEL ANÁLISIS MOSTRADO
+# =============================================================================
+st.markdown("---")
+st.markdown("## 📝 Conclusión del Análisis")
+st.info(f"""
+El presente Dashboard interactivo permite evaluar de manera integral el desempeño organizacional en **Socialize your knowledge**. 
+Basado en los filtros activos del departamento seleccionado ({selected_dept}), se concluye lo siguiente:
+
+* **Diversidad e Inclusión:** La gráfica de distribución por género expone de manera visual e inmediata el balance demográfico de los equipos corporativos facilitando auditorías de equidad.
+* **Monitorear el Rendimiento:** La distribución de los puntajes permite mapear con precisión qué porcentaje del equipo se ubica en categorías sobresalientes versus aquellos que requieren capacitaciones estructuradas.
+* **Análisis Estadístico de Eficiencia (Boxplot):** El diagrama de cajas permite analizar visualmente la dispersión, las medianas y los valores atípicos de las horas mensuales trabajadas contra las calificaciones de desempeño obtenidas, permitiendo identificar si un exceso de horas trabajadas verdaderamente impacta de forma positiva en la calificación del colaborador.
+* **Equidad Salarial:** El análisis cruzado de edad, puesto y salario proporciona visibilidad clave para garantizar políticas de compensación justas, transparentes y competitivas en el mercado.
+""")
