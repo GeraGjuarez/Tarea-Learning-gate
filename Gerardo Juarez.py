@@ -173,7 +173,7 @@ else:
 
     with col4:
         # CAMBIO SOLICITADO: Gráfica en formato Boxplot para Horas vs Desempeño
-        st.markdown("### 📊 Distribución de Horas Trabajadas por Puntaje de Desempeño (Boxplot)")
+        st.markdown("### 📊 Distribución de Horas Trabajadas por Puntaje de Desempeño")
         
         # Convertimos temporalmente a string para que actúe como categorías discretas en el eje X
         df_boxplot = df_filtered.copy()
