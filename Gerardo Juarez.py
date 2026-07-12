@@ -17,7 +17,7 @@ st.set_page_config(
 # =============================================================================
 @st.cache_data
 def load_data():
-    path = 'employee_data.csv'
+    path = 'Employee_data.csv'
     if os.path.exists(path):
         # sep=None detecta automáticamente si el CSV usa comas o puntos y comas
         df_loaded = pd.read_csv(path, sep=None, engine='python', encoding='utf-8-sig')
@@ -25,7 +25,7 @@ def load_data():
         df_loaded.columns = df_loaded.columns.str.strip()
         return df_loaded
     else:
-        st.error("❌ Error: No se encontró el archivo 'employee_data.csv' en tu repositorio.")
+        st.error("❌ Error: No se encontró el archivo 'Employee_data.csv' en tu repositorio.")
         st.stop()
 
 # Cargar los datos reales
