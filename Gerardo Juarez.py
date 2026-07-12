@@ -13,20 +13,35 @@ st.set_page_config(
 # 2. CARGA Y FILTRADO DE LA BASE DE DATOS
 @st.cache_data
 def load_data():
-    path = 'Employee_data.csv'
+    path = 'employee_data.csv'
     if os.path.exists(path):
-        return pd.read_csv(path)
+        df_loaded = pd.read_csv(path)
+        # Limpiar espacios ocultos en los nombres de las columnas
+        df_loaded.columns = df_loaded.columns.str.strip()
+        return df_loaded
     else:
-        # Si el archivo obligatorio no está, la app se detiene limpiamente explicando el motivo
-        st.error("❌ Error crítico: No se encontró el archivo 'Employee_data.csv' en el repositorio.")
-        st.info("Por favor, asegúrate de subir el archivo CSV a la misma carpeta de tu repositorio en GitHub.")
+        st.error("❌ Error crítico: No se encontró el archivo 'employee_data.csv' en el repositorio.")
         st.stop()
 
 # Cargar datos reales
 df_raw = load_data()
 
-# Filtrar e identificar únicamente al Área de Marketing
-df = df_raw[df_raw['department'].str.lower() == 'marketing'].copy()
+# --- DIAGNÓSTICO INTELIGENTE DEL DEPARTAMENTO ---
+if 'department' not in df_raw.columns:
+    st.error("❌ La columna 'department' no existe en tu archivo CSV.")
+    st.info(f"Columnas detectadas en tu archivo: {list(df_raw.columns)}")
+    st.stop()
+
+# Filtrar asegurando limpiar espacios en blanco a los lados (.str.strip())
+df = df_raw[df_raw['department'].astype(str).str.strip().str.lower() == 'marketing'].copy()
+
+# Si sigue vacío, le mostramos al usuario qué departamentos sí existen para corregir
+if df.empty:
+    st.warning("⚠️ El archivo cargó con éxito, pero no se encontró ningún colaborador con el departamento exacto de 'Marketing'.")
+    st.info("Revisa la lista de departamentos detectados en tu archivo CSV abajo. ¿Tiene otro nombre?")
+    st.write(list(df_raw['department'].dropna().unique()))
+    st.stop()
+# ------------------------------------------------
 
 # 3. TÍTULO, DESCRIPCIÓN Y LOGOTIPO
 st.title("📊 Dashboard de Análisis de Desempeño")
@@ -44,7 +59,7 @@ st.markdown("---")
 st.sidebar.header("⚙️ Filtros del Personal")
 
 # Filtro A: Género
-gender_options = ["Todos"] + list(df['gender'].unique())
+gender_options = ["Todos"] + list(df['gender'].dropna().unique())
 selected_gender = st.sidebar.selectbox("Selecciona el Género:", gender_options)
 
 # Filtro B: Rango de Puntaje de Desempeño
@@ -53,7 +68,7 @@ max_perf = int(df['performance_score'].max()) if not df.empty else 5
 selected_perf_range = st.sidebar.slider("Rango de Puntaje de Desempeño:", 1, 5, (min_perf, max_perf))
 
 # Filtro C: Estado Civil
-marital_options = ["Todos"] + list(df['marital_status'].unique())
+marital_options = ["Todos"] + list(df['marital_status'].dropna().unique())
 selected_marital = st.sidebar.selectbox("Selecciona el Estado Civil:", marital_options)
 
 # Aplicar Filtros
