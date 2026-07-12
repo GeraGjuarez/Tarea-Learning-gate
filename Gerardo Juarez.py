@@ -13,14 +13,14 @@ st.set_page_config(
 # 2. CARGA Y FILTRADO DE LA BASE DE DATOS
 @st.cache_data
 def load_data():
-    path = 'employee_data.csv'
+    path = 'Employee_data.csv'
     if os.path.exists(path):
         df_loaded = pd.read_csv(path)
         # Limpiar espacios ocultos en los nombres de las columnas
         df_loaded.columns = df_loaded.columns.str.strip()
         return df_loaded
     else:
-        st.error("❌ Error crítico: No se encontró el archivo 'employee_data.csv' en el repositorio.")
+        st.error("❌ Error crítico: No se encontró el archivo 'Employee_data.csv' en el repositorio.")
         st.stop()
 
 # Cargar datos reales
