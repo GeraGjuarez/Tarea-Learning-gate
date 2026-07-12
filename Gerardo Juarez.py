@@ -17,7 +17,7 @@ st.set_page_config(
 # =============================================================================
 @st.cache_data
 def load_data():
-    path = 'employee_data.csv'
+    path = 'Employee_data.csv'
     if os.path.exists(path):
         df_loaded = pd.read_csv(path, sep=None, engine='python', encoding='utf-8-sig')
         
@@ -30,7 +30,7 @@ def load_data():
             
         return df_loaded
     else:
-        st.error("❌ Error crítico: No se encontró el archivo 'employee_data.csv' en el repositorio.")
+        st.error("❌ Error crítico: No se encontró el archivo 'Employee_data.csv' en el repositorio.")
         st.stop()
 
 # Cargar los datos del archivo provisto
