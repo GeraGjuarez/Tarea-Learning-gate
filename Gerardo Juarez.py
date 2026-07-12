@@ -7,83 +7,74 @@ import os
 # 1. CONFIGURACIÓN DE LA PÁGINA WEB
 # =============================================================================
 st.set_page_config(
-    page_title="Dashboard Marketing - Socialize your knowledge",
+    page_title="Dashboard de Desempeño - Socialize your knowledge",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # =============================================================================
-# 2. CARGA Y FILTRADO DE LA BASE DE DATOS
+# 2. CARGA DE LA BASE DE DATOS
 # =============================================================================
 @st.cache_data
 def load_data():
-    path = 'Employee_data.csv'
+    path = 'employee_data.csv'
     if os.path.exists(path):
-        # sep=None y engine='python' detectan automáticamente si se separó por comas o puntos y comas desde Excel
         df_loaded = pd.read_csv(path, sep=None, engine='python', encoding='utf-8-sig')
-        # Limpia espacios en blanco invisibles que se cuelan en los títulos del Excel
+        # Limpia espacios en blanco en los nombres de las columnas
         df_loaded.columns = df_loaded.columns.str.strip()
+        
+        # Limpia espacios en blanco dentro de los datos de la columna de departamento
+        if 'department' in df_loaded.columns:
+            df_loaded['department'] = df_loaded['department'].astype(str).str.strip()
+            
         return df_loaded
     else:
-        st.error("❌ Error crítico: No se encontró el archivo 'Employee_data.csv' en tu repositorio de GitHub.")
-        st.info("Asegúrate de subir el archivo CSV exactamente con ese nombre y en la misma carpeta que este script.")
+        st.error("❌ Error crítico: No se encontró el archivo 'employee_data.csv' en tu repositorio.")
         st.stop()
 
 # Cargar los datos reales
 df_raw = load_data()
 
-# Validar que existan las columnas esenciales antes de avanzar
+# Validar columnas esenciales
 columnas_requeridas = ['department', 'gender', 'performance_score', 'marital_status', 'average_work_hours', 'age', 'salary']
 columnas_faltantes = [col for col in columnas_requeridas if col not in df_raw.columns]
 
 if columnas_faltantes:
-    st.error(f"❌ Al archivo CSV le faltan las siguientes columnas obligatorias: {columnas_faltantes}")
-    st.info(f"Las columnas que el sistema detectó en tu archivo son: {list(df_raw.columns)}")
-    st.stop()
-
-# Filtrar para dejar ÚNICAMENTE al Área de Marketing (limpiando espacios y pasándolo a minúsculas)
-df = df_raw[df_raw['department'].astype(str).str.strip().str.lower() == 'marketing'].copy()
-
-# Si el filtro de Marketing se queda vacío, la app te dirá qué departamentos encontró realmente
-if df.empty:
-    st.warning("⚠️ El archivo cargó correctamente, pero ningún empleado tiene asignado el departamento exacto de 'Marketing'.")
-    st.info("Revisa qué departamentos detectó el sistema dentro de tu archivo actual:")
-    st.write(list(df_raw['department'].dropna().unique()))
+    st.error(f"❌ Al archivo CSV le faltan columnas obligatorias: {columnas_faltantes}")
     st.stop()
 
 # =============================================================================
-# 3. TÍTULO, DESCRIPCIÓN Y LOGOTIPO
-# =============================================================================
-st.title("📊 Dashboard de Análisis de Desempeño")
-st.subheader("Área de Marketing — Socialize your knowledge")
-
-if os.path.exists('logo.png'):
-    st.image('logo.png', width=180)
-else:
-    st.markdown("🌐 **[LOGOTIPO: Socialize your knowledge]**")
-
-st.markdown("Esta aplicación web interactiva muestra el análisis de desempeño exclusivo de los colaboradores del **Área de Marketing**.")
-st.markdown("---")
-
-# =============================================================================
-# 4. CONTROLES Y FILTROS INTERACTIVOS (Sidebar / Menú Lateral)
+# 3. CONTROLES Y FILTROS INTERACTIVOS (Sidebar / Menú Lateral)
 # =============================================================================
 st.sidebar.header("⚙️ Filtros del Personal")
 
-# Filtro A: Género (columna 'gender')
-gender_options = ["Todos"] + list(df['gender'].dropna().unique())
-selected_gender = st.sidebar.selectbox("Selecciona el Género:", gender_options)
+# --- FILTRO DINÁMICO DE DEPARTAMENTO ---
+dept_options = sorted(list(df_raw['department'].dropna().unique()))
 
-# Filtro B: Rango de Puntaje de Desempeño (columna 'performance_score')
+# Si "Marketing" existiera, lo selecciona por defecto; si no, elige el primero de la lista (ej. Sales o Production)
+default_index = dept_options.index("Marketing") if "Marketing" in dept_options else 0
+
+selected_dept = st.sidebar.selectbox(
+    "1. Selecciona el Departamento a analizar:", 
+    dept_options, 
+    index=default_index
+)
+
+# Filtrar la base primaria por el departamento seleccionado
+df = df_raw[df_raw['department'] == selected_dept].copy()
+
+# Filtros Demográficos secundarios
+gender_options = ["Todos"] + sorted(list(df['gender'].dropna().unique()))
+selected_gender = st.sidebar.selectbox("2. Selecciona el Género:", gender_options)
+
 min_perf = int(df['performance_score'].min()) if not df.empty else 1
 max_perf = int(df['performance_score'].max()) if not df.empty else 5
-selected_perf_range = st.sidebar.slider("Rango de Puntaje de Desempeño:", 1, 5, (min_perf, max_perf))
+selected_perf_range = st.sidebar.slider("3. Rango de Puntaje de Desempeño:", 1, 5, (min_perf, max_perf))
 
-# Filtro C: Estado Civil (columna 'marital_status')
-marital_options = ["Todos"] + list(df['marital_status'].dropna().unique())
-selected_marital = st.sidebar.selectbox("Selecciona el Estado Civil:", marital_options)
+marital_options = ["Todos"] + sorted(list(df['marital_status'].dropna().unique()))
+selected_marital = st.sidebar.selectbox("4. Selecciona el Estado Civil:", marital_options)
 
-# --- APLICACIÓN DE LOS FILTROS ---
+# --- APLICACIÓN DE LOS FILTROS SECUNDARIOS ---
 df_filtered = df.copy()
 if selected_gender != "Todos":
     df_filtered = df_filtered[df_filtered['gender'] == selected_gender]
@@ -96,16 +87,30 @@ df_filtered = df_filtered[
 if selected_marital != "Todos":
     df_filtered = df_filtered[df_filtered['marital_status'] == selected_marital]
 
-# Validar si hay datos después de usar los filtros del menú lateral
+# =============================================================================
+# 4. TÍTULO, DESCRIPCIÓN Y LOGOTIPO (Títulos Dinámicos)
+# =============================================================================
+st.title("📊 Dashboard de Análisis de Desempeño")
+st.subheader(f"Área de {selected_dept} — Socialize your knowledge")
+
+if os.path.exists('logo.png'):
+    st.image('logo.png', width=180)
+else:
+    st.markdown("🌐 **[LOGOTIPO: Socialize your knowledge]**")
+
+st.markdown(f"Esta aplicación web interactiva muestra el análisis de desempeño exclusivo de los colaboradores del **Área de {selected_dept}**.")
+st.markdown("---")
+
+# Validar si hay datos después de usar los filtros
 if df_filtered.empty:
-    st.error("⚠️ No se encontraron colaboradores de Marketing con la combinación de filtros seleccionada.")
+    st.error("⚠️ No se encontraron colaboradores con la combinación de filtros seleccionada. Prueba ajustando el menú lateral.")
 else:
     # Vista previa de la matriz de datos filtrados
     with st.expander("👀 Ver registros filtrados actuales"):
         st.dataframe(df_filtered)
 
     # =============================================================================
-    # 5. VISUALIZACIÓN DE GRÁFICOS (Paso 2 del reto)
+    # 5. VISUALIZACIÓN DE GRÁFICOS
     # =============================================================================
     st.markdown("## 📈 Análisis Visual")
     col1, col2 = st.columns(2)
@@ -153,8 +158,8 @@ else:
 # =============================================================================
 st.markdown("---")
 st.markdown("## 📝 Conclusión del Análisis")
-st.info("""
-El presente Dashboard interactivo permite evaluar de manera integral al Área de Marketing. 
+st.info(f"""
+El presente Dashboard interactivo permite evaluar de manera integral al Área de {selected_dept}. 
 A través de la segmentación dinámica, el departamento de Recursos Humanos y los líderes de equipo pueden:
 * **Monitorear el Rendimiento:** Identificar qué porcentaje del equipo se encuentra en el nivel máximo de desempeño (5) y quiénes requieren capacitación o soporte.
 * **Evaluar la Eficiencia:** Correlacionar el promedio de horas mensuales trabajadas con los resultados de desempeño, previniendo el *burnout*.
